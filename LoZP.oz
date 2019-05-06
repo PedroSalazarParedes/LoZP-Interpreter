@@ -22,8 +22,8 @@ fun{MyEval Exp Env}
    then {EvalConditional Exp Env}
 
    elseif {IsApplication Exp}
-   then {MyApply {MyEval {Operator Exp} Env}
-	 {ListOfValues {Operands Exp} Env}}
+   then {MyApply {MyEval Exp.1 Env}
+	 {ListOfValues Exp.2 Env}}
       
    end
 end
