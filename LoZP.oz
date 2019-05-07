@@ -1,4 +1,6 @@
-
+%usamos el intérprete de Scheme del libro Structure and Interpretation of Computer Programs como inspiración
+%Mariana Rodriguez
+%Pedro Salazar
 declare
 
 %'main' function
@@ -8,6 +10,7 @@ end
 
 %Eval
 fun{MyEval Exp Env}
+
    if {IsValue Exp}
    then Exp
       
@@ -30,13 +33,13 @@ fun{MyEval Exp Env}
    then {MyApply {MyEval Exp.1 Env}
 	 {ListOfValues Exp.2 Env}}
 
-   else {Browse 'Syntax error?'}
-      
+   else {Browse 'Chispas Batman'}
    end
 end
 
 %Apply
 fun{MyApply Proc Args}
+
    if {IsInMozart Exp}
    then {ApplyMozartProc Proc Args}
 
@@ -45,7 +48,35 @@ fun{MyApply Proc Args}
    {ExtendEnv {GetArgs Proc} Args {GetProcEnv Proc}}}
 
    else {Browse 'yucas'}
-      
    end
 end
 
+fun{IsValue Exp}
+
+end
+
+fun{IsVariable Exp}
+
+end
+
+fun{IsDefvar Exp}
+
+end
+
+fun{IsDefun Exp}
+
+end
+
+fun{IsUnification Exp}
+
+end
+
+fun{IsConditional Exp}
+
+end
+
+fun{IsApplication Exp}
+
+end
+
+end
