@@ -4,12 +4,15 @@
 declare
 
 %'main' function
-fun{Interpret L Ctx}
-   L
+fun{PedroEsLoMax L}
+   
+   case L 
+   of X|Xs {Interpret X 
+
 end
 
 %Eval
-fun{MyEval Exp Env}
+fun{Interpret L Ctx}
 
    if {IsValue Exp}
    then Exp
@@ -33,7 +36,7 @@ fun{MyEval Exp Env}
    then {MyApply {MyEval Exp.1 Env}
 	 {ListOfValues Exp.2 Env}}
 
-   else {Browse 'Chispas Batman'}
+   else raise chispasBatman end
    end
 end
 
@@ -47,36 +50,36 @@ fun{MyApply Proc Args}
    then {EvalSec {GetBody Proc}
    {ExtendEnv {GetArgs Proc} Args {GetProcEnv Proc}}}
 
-   else {Browse 'yucas'}
+   else raise yucas end
    end
 end
 
 fun{IsValue Exp}
-
+   {Or {IsNumber Exp}{IsBool Exp}}
 end
 
 fun{IsVariable Exp}
-
+   {IsAtom Exp}
 end
 
 fun{IsDefvar Exp}
-
+   {= Exp.1 'defvar'}
 end
 
 fun{IsDefun Exp}
-
+   {= Exp.1 'defun'}
 end
 
 fun{IsUnification Exp}
-
+   {= Exp.1 'unify'}
 end
 
 fun{IsConditional Exp}
-
+   {= Exp.1 'conditional'}
 end
 
 fun{IsApplication Exp}
-
+   {IsList Exp}
 end
 
 end
