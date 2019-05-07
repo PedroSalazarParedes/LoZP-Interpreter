@@ -44,17 +44,9 @@ fun {LookupVariable Exp Env} x end
 fun {LookupBody Proc} x end
 fun {ExtendEnv Args Env} x end
 fun {EvalDefvar Exp Env} x end
-fun {EvalDefun Exp Env}
-end
-
+fun {EvalDefun Exp Env} x end
 fun {EvalUnification Exp Env} x end
-
-fun {EvalConditional Exp Env}
-   if {Interpret Exp.1 Env}
-   then {Interpret Exp.2.1 Env}
-   else {Interpret Exp.2.2.1 Env}
-   end
-end
+fun {EvalConditional Exp Env} x end
 
 fun{IsValue Exp}
    {Or {IsNumber Exp}{IsBool Exp}}
