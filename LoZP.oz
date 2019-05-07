@@ -4,20 +4,14 @@
 declare
 
 %'main' function
-fun{PedroEsLoMax L}
-   
-   case L 
-   of X|Xs {Interpret X 
-
-end
 
 %Eval
-fun{Interpret L Ctx}
+fun{Interpret Exp Env}
 
    if {IsValue Exp}
    then Exp
       
-   elseif {IsVaraible Exp}
+   elseif {IsVariable Exp}
    then {LookupVariable Exp Env}
 
    elseif {IsDefvar Exp}
@@ -33,26 +27,26 @@ fun{Interpret L Ctx}
    then {EvalConditional Exp Env}
 
    elseif {IsApplication Exp}
-   then {MyApply {MyEval Exp.1 Env}
-	 {ListOfValues Exp.2 Env}}
+   then {MyApply Exp.1 {Map fun{$ X} {Interpret X Env} end Exp.2} Env}
 
    else raise chispasBatman end
    end
 end
 
 %Apply
-fun{MyApply Proc Args}
+fun{MyApply Proc Args Env}
 
-   if {IsInMozart Exp}
-   then {ApplyMozartProc Proc Args}
+   {Interpret {LookupBody Proc} {ExtendEnv Args Env}}
 
-   elseif {IsCompund Proc}
-   then {EvalSec {GetBody Proc}
-   {ExtendEnv {GetArgs Proc} Args {GetProcEnv Proc}}}
-
-   else raise yucas end
-   end
 end
+
+fun {LookupVariable Exp Env} x end
+fun {LookupBody Proc} x end
+fun {ExtendEnv Args Env} x end
+fun {EvalDefvar Exp Env} x end
+fun {EvalDefun Exp Env} x end
+fun {EvalUnification Exp Env} x end
+fun {EvalConditional Exp Env} x end
 
 fun{IsValue Exp}
    {Or {IsNumber Exp}{IsBool Exp}}
@@ -63,23 +57,28 @@ fun{IsVariable Exp}
 end
 
 fun{IsDefvar Exp}
-   {= Exp.1 'defvar'}
+   Exp.1 == 'defvar'
 end
 
 fun{IsDefun Exp}
-   {= Exp.1 'defun'}
+  Exp.1 == 'defun'
 end
 
 fun{IsUnification Exp}
-   {= Exp.1 'unify'}
+   Exp.1 == 'unify'
 end
 
 fun{IsConditional Exp}
-   {= Exp.1 'conditional'}
+   Exp.1 == 'conditional'
 end
 
 fun{IsApplication Exp}
    {IsList Exp}
 end
 
-end
+
+
+
+
+{Browse {Interpret x nil}}
+
