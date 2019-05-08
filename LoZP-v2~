@@ -6,18 +6,16 @@ declare
 %'main' function
 
 %Eval
-fun{Interpret Exp Env NewEnv}
+fun{Interpret Exp Env}
 
    if {IsValue Exp}
-   then NewEnv = Env
-      Exp
+   then Exp
       
    elseif {IsVariable Exp}
-   then NewEnv = Env
-      {LookupVariable Exp Env}
+   then {LookupVariable Exp Env}
 
    elseif {IsDefvar Exp}
-   then {EvalDefvar Exp Env NewEnv}
+   then {EvalDefvar Exp Env}
 
    elseif {IsDefun Exp}
    then {EvalDefun Exp Env}
@@ -37,19 +35,74 @@ end
 
 %Apply
 fun{MyApply Proc Args Env}
-   local X in
-      X = {LookupVariable Proc Env}
-      if X.1 == 'closure'
-      then {EvalSequence X.2.2.1 {ExtendEnv X.2.1 Args X.2.2.2.1}}
-      else raise notAFunction end
+   if Proc == 'eq'
+   then
+      if {List.length Args} == 2 then  Args.1 == Args.2.1
+      else raise wrongNumberOfParams end
+      end
+   elseif Proc == 'leq'
+   then
+      if ({List.length Args} == 2) then  (Args.1 <= Args.2.1)
+      else raise wrongNumberOfParams end
+      end
+   elseif Proc == 'geq'
+   then
+      if {List.length Args} == 2 then  Args.1 >= Args.2.1
+      else raise wrongNumberOfParams end
+      end
+   elseif Proc == 'sum'
+   then
+      if {List.length Args} == 2 then  Args.1 + Args.2.1
+      else raise wrongNumberOfParams end
+      end
+   elseif Proc == 'subtract'
+   then
+      if {List.length Args} == 2 then  Args.1 - Args.2.1
+      else raise wrongNumberOfParams end
+      end
+   elseif Proc == 'multiply'
+   then
+      if {List.length Args} == 2 then  Args.1 * Args.2.1
+      else raise wrongNumberOfParams end
+      end
+   elseif Proc == 'divide'
+   then
+      if {List.length Args} == 2 then  Args.1 / Args.2.1
+      else raise wrongNumberOfParams end
+      end
+   else      
+      local X in
+	 X = {LookupVariable Proc Env}
+	 if X.1 == 'closure'
+	 then {EvalSequence X.2.2.2.1 {ExtendEnv X.2.2.1 Args X.2.1}}
+	 else raise notAFunction end
+	 end
       end
    end
 end
 
+fun {ExtendEnv Params Args Env}
+   case Env of nil then nil | [{MakeRecord env [Exp]}]
+   [] H|T then nil |{ExtendLocalEnv Params Args H} | T
+   end
+end
+
+fun {ExtendLocalEnv Params Args LocalEnv}
+   case LocalEnv of nil then {MakeRecord env [Exp]}
+   else
+      {Record.adjoinList LocalEnv {List.zip Params Args fun {$ I A} I#A end} }
+   end
+end
+
 fun{EvalSequence Proc Env}
-   case Proc of H|T then
-      if H\=nil andthen T==nil then {Interpret H Env}
-      elseif H\=nil andthen T\=nil then {Interpret H Env} {EvalSequence T Env}
+   case Proc of nil then raise funcionSinRetorno end
+   [] H|T then
+      local Res in
+	 Res = {Interpret H Env}
+	 if {IsEnvironment Res}
+	 then {EvalSequence T Res}
+	 else Res
+	 end
       end
    end
 end
@@ -66,33 +119,51 @@ fun {LookupVariable Exp Env}
 end
 
 fun{LookupVarEnv Exp LocalEnv}
-    if {Value.hasFeature LocalEnv Exp}
+   if {Value.hasFeature LocalEnv Exp}
    then
       local Y in {Value.condSelect LocalEnv Exp 0 Y}
-	 if {IsBound Y} then Y
+	 if {IsDet Y} then Y
 	 else raise noValorAsignado end
 	 end
       end      
    else raise noExisteVariable end
    end
-
-fun {ExtendEnv Params Args Env}
-   {Record.adjoinList Env {List.zip Params Args fun {$ I A} I#A end} }
 end
+
    
-fun {EvalDefvar Exp Env NewEnv}
-   case Env of nil then NewEnv = {MakeRecord env [Exp]}
-   NewEnv = {Record.adjoinAt 
-end
-
-fun {EvalDefun Exp Env}
-   if {Value.hasFeature Env Exp.1}
-   then raise yaExisteVariable end
-   else {Append Exp.2.2.1 Env}
+fun {EvalDefvar Exp Env}
+   case Env of nil then [{MakeRecord env [Exp]}]
+   [] H|T then {Extendvar Exp H} | T
    end
 end
 
-fun {EvalUnification Exp Env} x end
+fun {Extendvar Exp LocalEnv}
+   case LocalEnv of nil then {MakeRecord env [Exp]}
+   else
+      if {Value.hasFeature LocalEnv Exp} then raise yaExisteLaVariable end
+      else {AdjoinAt LocalEnv  Exp _}
+      end
+   end
+end
+
+fun {EvalDefun Exp Env}
+   case Env of nil then [{AdjoinAt {MakeRecord env [Exp.1]} Exp.1 'closure'|Env|Exp.2}]
+   [] H|T then {Extendfun Exp H} | T
+   end
+end
+
+fun {Extendfun Exp LocalEnv}
+   case LocalEnv of nil then {AdjoinAt {MakeRecord env [Exp.1]} Exp.1 'closure'|Env|Exp.2}
+   else
+      if {Value.hasFeature LocalEnv Exp.1} then raise yaExisteLaVariable end
+      else  {AdjoinAt LocalEnv  Exp.1 'closure'|Env|Exp.2}
+      end
+   end
+end
+
+fun {EvalUnification Exp Env}
+
+end
 
 fun {EvalConditional Exp Env}
    if {Interpret Exp.1 Env}
@@ -129,11 +200,11 @@ fun{IsApplication Exp}
    {IsList Exp} andthen {IsAtom Exp.1}
 end
 
-
-
+fun{IsEnvironment Exp}
+   {IsList Exp} andthen {IsRecord Exp.1}
+end
 
 
 {Browse {Interpret x nil}}
-{Browse {Interpret x env(x:0)}}
-
+{Browse {Interpret [ [defvar n]]}}
 
