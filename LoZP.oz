@@ -15,13 +15,13 @@ fun{Interpret Exp Env}
    then {LookupVariable Exp Env}
 
    elseif {IsDefvar Exp}
-   then {EvalDefvar Exp Env}
+   then {EvalDefvar Exp Env} %Piter
 
    elseif {IsDefun Exp}
    then {EvalDefun Exp Env}
 
    elseif {IsUnification Exp}
-   then {EvalUnification Exp Env}
+   then {EvalUnification Exp Env}%Piter
 
    elseif {IsConditional Exp}
    then {EvalConditional Exp Env}
@@ -80,5 +80,5 @@ end
 
 
 
-{Browse {Interpret x nil}}
+{Browse {Interpret [defvar] nil}}
 
