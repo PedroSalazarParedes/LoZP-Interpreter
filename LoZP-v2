@@ -4,7 +4,6 @@
 declare
 
 %'main' function
-
 %Eval
 fun{Interpret Exp Env}
 
@@ -27,7 +26,7 @@ fun{Interpret Exp Env}
    then {EvalConditional Exp Env}
 
    elseif {IsApplication Exp}
-   then {MyApply Exp.1 {Map fun{$ X} {Interpret X Env} end Exp.2} Env}
+   then {MyApply Exp.1 {Map Exp.2 fun{$ X} {Interpret X Env} end} Env}
 
    else raise chispasBatman end
    end
@@ -147,28 +146,40 @@ fun {Extendvar Exp LocalEnv}
 end
 
 fun {EvalDefun Exp Env}
-   case Env of nil then [{AdjoinAt {MakeRecord env [Exp.1]} Exp.1 'closure'|Env|Exp.2}]
+   case Env of nil then [{AdjoinAt {MakeRecord env [Exp.2.1]} Exp.2.1 'closure'|Env|Exp.2.2}]
    [] H|T then {Extendfun Exp H Env} | T
    end
 end
 
 fun {Extendfun Exp LocalEnv Env}
-   case LocalEnv of nil then {AdjoinAt {MakeRecord env [Exp.1]} Exp.1 'closure'|Env|Exp.2}
+   case LocalEnv of nil then {AdjoinAt {MakeRecord env [Exp.2.1]} Exp.2.1 'closure'|Env|Exp.2.2}
    else
-      if {Value.hasFeature LocalEnv Exp.1} then raise yaExisteLaVariable end
-      else  {AdjoinAt LocalEnv  Exp.1 'closure'|Env|Exp.2}
+      if {Value.hasFeature LocalEnv Exp.2.1} then raise yaExisteLaVariable end
+      else  {AdjoinAt LocalEnv  Exp.2.1 'closure'|Env|Exp.2.2}
       end
    end
 end
 
-fun {EvalUnification Exp Env}
-   x
+fun{EvalUnification Exp Env}
+   case Env of nil then raise unboundVariable end
+   [] H|T then 
+      try if {Interpret Exp.2.1 Env} == {Interpret Exp.2.2.1 Env} then Env
+	  else raise esoNoUnifiK end 
+	  end
+      catch noValorAsignado then 
+	 try
+	    {AdjoinAt H Exp.2.1 {Interpret Exp.2.2.1 Env}}|T
+	 catch noValorAsignado then {AdjoinAt H Exp.2.2.1 {Interpret Exp.2.1 Env}}|T 
+	 end
+      [] noExisteVariable then raise unboundVariable end
+      end
+   end
 end
 
 fun {EvalConditional Exp Env}
-   if {Interpret Exp.1 Env}
-   then {Interpret Exp.2.1 Env}
-   else {Interpret Exp.2.2.1 Env}
+   if {Interpret Exp.2.1 Env}
+   then {Interpret Exp.2.2.1 Env}
+   else {Interpret Exp.2.2.2.1 Env}
    end
 end
 
@@ -204,6 +215,9 @@ fun{IsEnvironment Exp}
    {IsList Exp} andthen {IsRecord Exp.1}
 end
 
-{Show hola}
-{Browse {Interpret [defvar n]  nil}}
 
+{Browse {Interpret [defvar n]  nil}}
+{Browse {Interpret [conditional [eq 1 0] 1 2]  [nil]}}
+{Browse {Interpret [defun  fac [n][[ conditional [eq n 0] 1 [multiply n [fac [subtract n 1]]]]]]   [nil]}}
+{Browse {Interpret [unify x n] [env(n:_ )]}}
+%{Browse {MyApply eq [0 1] [env(n:1)]}}

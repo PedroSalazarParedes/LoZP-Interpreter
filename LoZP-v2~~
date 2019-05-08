@@ -1,4 +1,4 @@
-%usamos el interprete de Scheme del libro Structure and Interpretation of Computer Programs como inspiracion
+%usamos el intérprete de Scheme del libro Structure and Interpretation of Computer Programs como inspiración
 %Mariana Rodriguez
 %Pedro Salazar
 declare
@@ -42,12 +42,12 @@ fun{MyApply Proc Args Env}
       end
    elseif Proc == 'leq'
    then
-      if {List.length Args} == 2 then Args.1 =< Args.2.1
+      if ({List.length Args} == 2) then  (Args.1 <= Args.2.1)
       else raise wrongNumberOfParams end
       end
    elseif Proc == 'geq'
    then
-      if ({List.length Args} == 2) then  Args.1 >= Args.2.1
+      if {List.length Args} == 2 then  Args.1 >= Args.2.1
       else raise wrongNumberOfParams end
       end
    elseif Proc == 'sum'
@@ -111,9 +111,9 @@ fun {LookupVariable Exp Env}
    case Env of nil then raise noExisteVariable end
    [] H|T then
       try
-	 {LookupVarEnv Exp H}
+	 {LookUpVarEnv Exp H}
       catch noExisteVariable then
-	 {LookupVariable Exp T}
+	 {LookUpVariable Exp T}
       end
    end
 end
@@ -132,7 +132,7 @@ end
 
    
 fun {EvalDefvar Exp Env}
-   case Env of nil then [{MakeRecord env [Exp.2.1]}]
+   case Env of nil then [{MakeRecord env [Exp]}]
    [] H|T then {Extendvar Exp H} | T
    end
 end
@@ -148,11 +148,11 @@ end
 
 fun {EvalDefun Exp Env}
    case Env of nil then [{AdjoinAt {MakeRecord env [Exp.1]} Exp.1 'closure'|Env|Exp.2}]
-   [] H|T then {Extendfun Exp H Env} | T
+   [] H|T then {Extendfun Exp H} | T
    end
 end
 
-fun {Extendfun Exp LocalEnv Env}
+fun {Extendfun Exp LocalEnv}
    case LocalEnv of nil then {AdjoinAt {MakeRecord env [Exp.1]} Exp.1 'closure'|Env|Exp.2}
    else
       if {Value.hasFeature LocalEnv Exp.1} then raise yaExisteLaVariable end
@@ -162,7 +162,7 @@ fun {Extendfun Exp LocalEnv Env}
 end
 
 fun {EvalUnification Exp Env}
-   x
+
 end
 
 fun {EvalConditional Exp Env}
@@ -204,7 +204,7 @@ fun{IsEnvironment Exp}
    {IsList Exp} andthen {IsRecord Exp.1}
 end
 
-{Show hola}
-{Browse {Interpret [defvar n]  nil}}
-{Browse {Interpret [eq 1 0]  nil}}
-%{Browse {MyApply eq [0 1] [env(n:1)]}}
+
+{Browse {Interpret x nil}}
+{Browse {Interpret [ [defvar n]]}}
+
