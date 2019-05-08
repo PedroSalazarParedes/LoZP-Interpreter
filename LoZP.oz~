@@ -35,18 +35,51 @@ end
 
 %Apply
 fun{MyApply Proc Args Env}
-
-   {Interpret {LookupBody Proc} {ExtendEnv Args Env}}
-
+   local X in
+      X = {LookupVariable Proc Env}
+      if X.1 == 'closure'
+      then {EvalSequence X.2.2.1 {ExtendEnv X.2.1 Args X.2.2.2.1}}
+      else raise notAFunction end
+      end
+   end
 end
 
-fun {LookupVariable Exp Env} x end
-fun {LookupBody Proc} x end
-fun {ExtendEnv Args Env} x end
+fun{EvalSequence Proc Env}
+   case Proc of H|T then
+      if H\=nil andthen T==nil then {Interpret H Env}
+      elseif H\=nil andthen T\=nil then {Interpret H Env} {EvalSequence T Env}
+      end
+   end
+end
+
+fun {LookupVariable Exp Env}
+   if {Value.hasFeature Env Exp}
+   then local Y in {Value.condSelect Env Exp 0 Y} Y end
+   else raise noExisteVariable end
+   end
+end
+
+fun {ExtendEnv Params Args Env}
+   {Record.adjoinList Env {List.zip Params Args fun {$ I A} I#A end} }
+end
+   
 fun {EvalDefvar Exp Env} x end
-fun {EvalDefun Exp Env} x end
+
+fun {EvalDefun Exp Env}
+   if {Value.hasFeature Env Exp.1}
+   then raise yaExisteVariable end
+   else {Append Exp.2.2.1 Env}
+   end
+end
+
 fun {EvalUnification Exp Env} x end
-fun {EvalConditional Exp Env} x end
+
+fun {EvalConditional Exp Env}
+   if {Interpret Exp.1 Env}
+   then {Interpret Exp.2.1 Env}
+   else {Interpret Exp.2.2.1 Env}
+   end
+end
 
 fun{IsValue Exp}
    {Or {IsNumber Exp}{IsBool Exp}}
@@ -61,7 +94,7 @@ fun{IsDefvar Exp}
 end
 
 fun{IsDefun Exp}
-  Exp.1 == 'defun'
+   Exp.1 == 'defun'
 end
 
 fun{IsUnification Exp}
@@ -81,4 +114,5 @@ end
 
 
 {Browse {Interpret x nil}}
+{Browse {Interpret x env(x:0)}}
 

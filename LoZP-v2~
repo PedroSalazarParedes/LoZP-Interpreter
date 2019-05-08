@@ -6,22 +6,24 @@ declare
 %'main' function
 
 %Eval
-fun{Interpret Exp Env}
+fun{Interpret Exp Env NewEnv}
 
    if {IsValue Exp}
-   then Exp
+   then NewEnv = Env
+      Exp
       
    elseif {IsVariable Exp}
-   then {LookupVariable Exp Env}
+   then NewEnv = Env
+      {LookupVariable Exp Env}
 
    elseif {IsDefvar Exp}
-   then {EvalDefvar Exp Env} %Piter
+   then {EvalDefvar Exp Env NewEnv}
 
    elseif {IsDefun Exp}
    then {EvalDefun Exp Env}
 
    elseif {IsUnification Exp}
-   then {EvalUnification Exp Env}%Piter
+   then {EvalUnification Exp Env}
 
    elseif {IsConditional Exp}
    then {EvalConditional Exp Env}
@@ -53,22 +55,35 @@ fun{EvalSequence Proc Env}
 end
 
 fun {LookupVariable Exp Env}
-   if {Value.hasFeature Env Exp}
+   case Env of nil then raise noExisteVariable end
+   [] H|T then
+      try
+	 {LookUpVarEnv Exp H}
+      catch noExisteVariable then
+	 {LookUpVariable Exp T}
+      end
+   end
+end
+
+fun{LookupVarEnv Exp LocalEnv}
+    if {Value.hasFeature LocalEnv Exp}
    then
-      local Y in {Value.condSelect Env Exp 0 Y}
+      local Y in {Value.condSelect LocalEnv Exp 0 Y}
 	 if {IsBound Y} then Y
 	 else raise noValorAsignado end
 	 end
-      end    
+      end      
    else raise noExisteVariable end
    end
-end
 
 fun {ExtendEnv Params Args Env}
    {Record.adjoinList Env {List.zip Params Args fun {$ I A} I#A end} }
 end
    
-fun {EvalDefvar Exp Env} x end
+fun {EvalDefvar Exp Env NewEnv}
+   case Env of nil then NewEnv = {MakeRecord env [Exp]}
+   NewEnv = {Record.adjoinAt 
+end
 
 fun {EvalDefun Exp Env}
    if {Value.hasFeature Env Exp.1}
@@ -120,4 +135,5 @@ end
 
 {Browse {Interpret x nil}}
 {Browse {Interpret x env(x:0)}}
+
 
