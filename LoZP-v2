@@ -1,10 +1,9 @@
-%usamos el intérprete de Scheme del libro Structure and Interpretation of Computer Programs como inspiración
+%usamos el interprete de Scheme del libro Structure and Interpretation of Computer Programs como inspiracion
 %Mariana Rodriguez
 %Pedro Salazar
 declare
 
 %'main' function
-
 %Eval
 fun{Interpret Exp Env}
 
@@ -27,7 +26,7 @@ fun{Interpret Exp Env}
    then {EvalConditional Exp Env}
 
    elseif {IsApplication Exp}
-   then {MyApply Exp.1 {Map fun{$ X} {Interpret X Env} end Exp.2} Env}
+   then {MyApply Exp.1 {Map Exp.2 fun{$ X} {Interpret X Env} end} Env}
 
    else raise chispasBatman end
    end
@@ -42,12 +41,12 @@ fun{MyApply Proc Args Env}
       end
    elseif Proc == 'leq'
    then
-      if {List.length Args} == 2 then  Args.1 <= Args.2.1
+      if {List.length Args} == 2 then Args.1 =< Args.2.1
       else raise wrongNumberOfParams end
       end
    elseif Proc == 'geq'
    then
-      if {List.length Args} == 2 then  Args.1 >= Args.2.1
+      if ({List.length Args} == 2) then  Args.1 >= Args.2.1
       else raise wrongNumberOfParams end
       end
    elseif Proc == 'sum'
@@ -111,9 +110,9 @@ fun {LookupVariable Exp Env}
    case Env of nil then raise noExisteVariable end
    [] H|T then
       try
-	 {LookUpVarEnv Exp H}
+	 {LookupVarEnv Exp H}
       catch noExisteVariable then
-	 {LookUpVariable Exp T}
+	 {LookupVariable Exp T}
       end
    end
 end
@@ -122,7 +121,7 @@ fun{LookupVarEnv Exp LocalEnv}
    if {Value.hasFeature LocalEnv Exp}
    then
       local Y in {Value.condSelect LocalEnv Exp 0 Y}
-	 if {IsBound Y} then Y
+	 if {IsDet Y} then Y
 	 else raise noValorAsignado end
 	 end
       end      
@@ -132,41 +131,55 @@ end
 
    
 fun {EvalDefvar Exp Env}
-   case Env of nil then [{MakeRecord env [Exp]}]
+   case Env of nil then [{MakeRecord env [Exp.2.1]}]
    [] H|T then {Extendvar Exp H} | T
    end
 end
 
 fun {Extendvar Exp LocalEnv}
    case LocalEnv of nil then {MakeRecord env [Exp]}
-   [] then
+   else
       if {Value.hasFeature LocalEnv Exp} then raise yaExisteLaVariable end
+      else {AdjoinAt LocalEnv  Exp _}
       end
    end
 end
 
 fun {EvalDefun Exp Env}
-   case Env of nil then [{AdjoinAt {MakeRecord env [Exp.1]} Exp.1 'closure'|Env|Exp.2}]
-   [] H|T then {Extendfun Exp H} | T
+   case Env of nil then [{AdjoinAt {MakeRecord env [Exp.2.1]} Exp.2.1 'closure'|Env|Exp.2.2}]
+   [] H|T then {Extendfun Exp H Env} | T
    end
 end
 
-fun {Extendfun Exp LocalEnv}
-   case LocalEnv of nil then {AdjoinAt {MakeRecord env [Exp.1]} Exp.1 'closure'|Env|Exp.2}
-   [] then
-      if {Value.hasFeature LocalEnv Exp.1} then raise yaExisteLaVariable end
+fun {Extendfun Exp LocalEnv Env}
+   case LocalEnv of nil then {AdjoinAt {MakeRecord env [Exp.2.1]} Exp.2.1 'closure'|Env|Exp.2.2}
+   else
+      if {Value.hasFeature LocalEnv Exp.2.1} then raise yaExisteLaVariable end
+      else  {AdjoinAt LocalEnv  Exp.2.1 'closure'|Env|Exp.2.2}
       end
    end
 end
 
-fun {EvalUnification Exp Env}
-
+fun{EvalUnification Exp Env}
+   case Env of nil then raise unboundVariable end
+   [] H|T then 
+      try if {Interpret Exp.2.1 Env} == {Interpret Exp.2.2.1 Env} then Env
+	  else raise esoNoUnifiK end 
+	  end
+      catch noValorAsignado then 
+	 try
+	    {AdjoinAt H Exp.2.1 {Interpret Exp.2.2.1 Env}}|T
+	 catch noValorAsignado then {AdjoinAt H Exp.2.2.1 {Interpret Exp.2.1 Env}}|T 
+	 end
+      [] noExisteVariable then raise unboundVariable end
+      end
+   end
 end
 
 fun {EvalConditional Exp Env}
-   if {Interpret Exp.1 Env}
-   then {Interpret Exp.2.1 Env}
-   else {Interpret Exp.2.2.1 Env}
+   if {Interpret Exp.2.1 Env}
+   then {Interpret Exp.2.2.1 Env}
+   else {Interpret Exp.2.2.2.1 Env}
    end
 end
 
@@ -203,6 +216,8 @@ fun{IsEnvironment Exp}
 end
 
 
-{Browse {Interpret x nil}}
-{Browse {Interpret [ [defvar n]]}}
-
+{Browse {Interpret [defvar n]  nil}}
+{Browse {Interpret [conditional [eq 1 0] 1 2]  [nil]}}
+{Browse {Interpret [defun  fac [n][[ conditional [eq n 0] 1 [multiply n [fac [subtract n 1]]]]]]   [nil]}}
+{Browse {Interpret [unify x n] [env(n:_ )]}}
+%{Browse {MyApply eq [0 1] [env(n:1)]}}
