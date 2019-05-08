@@ -15,13 +15,13 @@ fun{Interpret Exp Env}
    then {LookupVariable Exp Env}
 
    elseif {IsDefvar Exp}
-   then {EvalDefvar Exp Env} %Piter
+   then {EvalDefvar Exp Env}
 
    elseif {IsDefun Exp}
    then {EvalDefun Exp Env}
 
    elseif {IsUnification Exp}
-   then {EvalUnification Exp Env}%Piter
+   then {EvalUnification Exp Env}
 
    elseif {IsConditional Exp}
    then {EvalConditional Exp Env}
@@ -44,17 +44,9 @@ fun {LookupVariable Exp Env} x end
 fun {LookupBody Proc} x end
 fun {ExtendEnv Args Env} x end
 fun {EvalDefvar Exp Env} x end
-fun {EvalDefun Exp Env}
-end
-
+fun {EvalDefun Exp Env} x end
 fun {EvalUnification Exp Env} x end
-
-fun {EvalConditional Exp Env}
-   if {Interpret Exp.1 Env}
-   then {Interpret Exp.2.1 Env}
-   else {Interpret Exp.2.2.1 Env}
-   end
-end
+fun {EvalConditional Exp Env} x end
 
 fun{IsValue Exp}
    {Or {IsNumber Exp}{IsBool Exp}}
@@ -88,5 +80,5 @@ end
 
 
 
-{Browse {Interpret [defvar] nil}}
+{Browse {Interpret x nil}}
 
