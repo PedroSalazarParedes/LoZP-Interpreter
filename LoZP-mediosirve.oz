@@ -1,11 +1,12 @@
-%usamos el interpreter de Scheme del libro Structure and Interpretation of Computer Programs como inspiracion
+%We used the Scheme evaluator from Structure and Interpretation of Computer Programs as inspiration
 %Mariana Rodriguez
 %Pedro Salazar
 declare
-
 %Main
+%Main function to start the interpreter, the only argument is the LoZP program
+%Returns either the value of the evaluation of the program or 'se acabu' in case the program does not return anything
 fun{Main LoZP} 
-   fun{Main2 LoZP Env}
+   fun{Main2 LoZP Env} %Auxiliar function to be able to pass the environment from line to line
       case LoZP of nil then 'se acabu' 
       [] H|T then
 	 local Res in
@@ -28,6 +29,8 @@ fun{Interpret L Ctx}
 end
 
 %Eval
+%The arguments are the expression to evaluate an the environment
+%Returns either the value of the expression
 fun{MyEval Exp Env}
 
    if {IsValue Exp}
@@ -51,11 +54,13 @@ fun{MyEval Exp Env}
    elseif {IsApplication Exp}
    then {MyApply Exp.1 {Map Exp.2 fun{$ X} {MyEval X Env} end} Env}
 
-   else raise chispasBatman end
+   else raise chispasBatman end %Unknown expression 
    end
 end
 
 %Apply
+%The arguments are the procedure, its arguments, and the environment
+%The primitive procedures are applied here
 fun{MyApply Proc Args Env}
    if Proc == 'eq'
    then
@@ -103,6 +108,7 @@ fun{MyApply Proc Args Env}
    end
 end
 
+%Extends the environment 
 fun {ExtendEnv Params Args Env}
    case Env of nil then nil | [{MakeRecord env [Exp]}]
    [] H|T then nil |{ExtendLocalEnv Params Args H} | T
