@@ -1,11 +1,34 @@
-%usamos el interprete de Scheme del libro Structure and Interpretation of Computer Programs como inspiracion
+%usamos el interpreter de Scheme del libro Structure and Interpretation of Computer Programs como inspiracion
 %Mariana Rodriguez
 %Pedro Salazar
 declare
 
-%'main' function
+%Main
+fun{Main LoZP}
+   fun{Main2 LoZP Env}
+      case LoZP of nil then 'se acabu' end
+   [] H|T then
+      local Res in
+    Res = {MyEval H nil}
+    if {IsEnvironment Res}
+    then {Main2 T Res}
+    else Res
+    end
+      end
+   end
+   end
+   {Main2 LoZP nil}
+end
+
+
+
+%Interpret
+fun{Interpret L Ctx}
+   {MyEval L Ctx}
+end
+
 %Eval
-fun{Interpret Exp Env}
+fun{MyEval Exp Env}
 
    if {IsValue Exp}
    then Exp
@@ -26,7 +49,7 @@ fun{Interpret Exp Env}
    then {EvalConditional Exp Env}
 
    elseif {IsApplication Exp}
-   then {MyApply Exp.1 {Map Exp.2 fun{$ X} {Interpret X Env} end} Env}
+   then {MyApply Exp.1 {Map Exp.2 fun{$ X} {MyEval X Env} end} Env}
 
    else raise chispasBatman end
    end
@@ -97,7 +120,7 @@ fun{EvalSequence Proc Env}
    case Proc of nil then raise funcionSinRetorno end
    [] H|T then
       local Res in
-	 Res = {Interpret H Env}
+	 Res = {MyEval H Env}
 	 if {IsEnvironment Res}
 	 then {EvalSequence T Res}
 	 else Res
@@ -163,13 +186,13 @@ end
 fun{EvalUnification Exp Env}
    case Env of nil then raise unboundVariable end
    [] H|T then 
-      try if {Interpret Exp.2.1 Env} == {Interpret Exp.2.2.1 Env} then Env
+      try if {MyEval Exp.2.1 Env} == {MyEval Exp.2.2.1 Env} then Env
 	  else raise esoNoUnifiK end 
 	  end
       catch noValorAsignado then 
 	 try
-	    {AdjoinAt H Exp.2.1 {Interpret Exp.2.2.1 Env}}|T
-	 catch noValorAsignado then {AdjoinAt H Exp.2.2.1 {Interpret Exp.2.1 Env}}|T 
+	    {AdjoinAt H Exp.2.1 {MyEval Exp.2.2.1 Env}}|T
+	 catch noValorAsignado then {AdjoinAt H Exp.2.2.1 {MyEval Exp.2.1 Env}}|T 
 	 end
       [] noExisteVariable then raise unboundVariable end
       end
@@ -177,9 +200,9 @@ fun{EvalUnification Exp Env}
 end
 
 fun {EvalConditional Exp Env}
-   if {Interpret Exp.2.1 Env}
-   then {Interpret Exp.2.2.1 Env}
-   else {Interpret Exp.2.2.2.1 Env}
+   if {MyEval Exp.2.1 Env}
+   then {MyEval Exp.2.2.1 Env}
+   else {MyEval Exp.2.2.2.1 Env}
    end
 end
 
@@ -216,8 +239,8 @@ fun{IsEnvironment Exp}
 end
 
 
-{Browse {Interpret [defvar n]  nil}}
-{Browse {Interpret [conditional [eq 1 0] 1 2]  [nil]}}
-{Browse {Interpret [defun  fac [n][[ conditional [eq n 0] 1 [multiply n [fac [subtract n 1]]]]]]   [nil]}}
-{Browse {Interpret [unify x n] [env(n:_ )]}}
+{Browse {MyEval [defvar n]  nil}}
+{Browse {MyEval [conditional [eq 1 0] 1 2]  [nil]}}
+{Browse {MyEval [defun  fac [n][[ conditional [eq n 0] 1 [multiply n [fac [subtract n 1]]]]]]   [nil]}}
+{Browse {MyEval [unify x n] [env(n:_ )]}}
 %{Browse {MyApply eq [0 1] [env(n:1)]}}
