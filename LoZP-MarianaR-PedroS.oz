@@ -1,15 +1,18 @@
-%usamos el interpreter de Scheme del libro Structure and Interpretation of Computer Programs como inspiracion
+%We used the Scheme evaluator from Structure and Interpretation of Computer Programs as inspiration
 %Mariana Rodriguez
 %Pedro Salazar
-declare
 
-%Main
+
+
+
+%Main function to start the interpreter, the only argument is the LoZP program
+%Returns either the value of the evaluation of the program or 'se acabu' in case the program does not return anything
 fun{Main LoZP} 
    fun{Main2 LoZP Env}
       case LoZP of nil then 'se acabu' 
       [] H|T then
 	 local Res in
-	    Res = {Interpret H Env}
+	    Res = {MyEval H Env}
 	    if {IsEnvironment Res}
 	    then {Main2 T Res}
 	    else Res
@@ -22,11 +25,15 @@ in
 end
 
 %Interpret
-%fun{Interpret L Ctx}
-%   {MyEval L Ctx}
-%end
+%L is a line of LoZP and Ctx is the execution context
+fun{Interpret L Ctx}
+   {MyEval L Ctx}
+end
 
-fun{Interpret Exp Env}
+%Eval
+%The arguments are the expression to evaluate an the environment
+%Returns either the value of the expression
+fun{MyEval Exp Env}
 
    if {IsValue Exp}
    then Exp
@@ -47,13 +54,15 @@ fun{Interpret Exp Env}
    then {EvalConditional Exp Env}
 
    elseif {IsApplication Exp}
-   then {MyApply Exp.1 {Map Exp.2 fun{$ X} {Interpret X Env} end} Env}
+   then {MyApply Exp.1 {Map Exp.2 fun{$ X} {MyEval X Env} end} Env}
 
    else raise chispasBatman end
    end
 end
 
 %Apply
+%The arguments are the procedure, its arguments, and the environment
+%The primitive procedures are applied here
 fun{MyApply Proc Args Env}
    if Proc == 'eq'
    then
@@ -101,12 +110,15 @@ fun{MyApply Proc Args Env}
    end
 end
 
+%Extends the environment with a procedure
+%Environments are lists of records 
 fun {ExtendEnv Proc Body Params Args Env}
    case Env of nil then nil | [{Record.adjoinList {MakeRecord env Params} {List.zip Params Args fun {$ I A} I#A end} }]
    [] H|T then env(Proc: Body) |{ExtendLocalEnv Params Args H} | T
    end
 end
 
+%Extends the local environment
 fun {ExtendLocalEnv Params Args LocalEnv}
    case LocalEnv of nil then {MakeRecord env [Exp]}
    else
@@ -114,11 +126,12 @@ fun {ExtendLocalEnv Params Args LocalEnv}
    end
 end
 
+%Evaluates a sequence of procedures
 fun{EvalSequence Proc Env}
    case Proc of nil then raise funcionSinRetorno end
    [] H|T then
       local Res in
-	 Res = {Interpret H Env}
+	 Res = {MyEval H Env}
 	 if {IsEnvironment Res}
 	 then {EvalSequence T Res}
 	 else Res
@@ -127,6 +140,8 @@ fun{EvalSequence Proc Env}
    end
 end
 
+
+%Looks for a variable in all the environments
 fun {LookupVariable Exp Env}
    case Env of nil then raise noExisteVariable(data: Exp env:Env) end
    [] H|T then
@@ -138,6 +153,7 @@ fun {LookupVariable Exp Env}
    end
 end
 
+%looks for a variable just in the local environment
 fun{LookupVarEnv Exp LocalEnv}
    if {Value.hasFeature LocalEnv Exp}
    then
@@ -150,13 +166,15 @@ fun{LookupVarEnv Exp LocalEnv}
    end
 end
 
-   
+
+%Defines a new unbound variable in the environment   
 fun {EvalDefvar Exp Env}
    case Env of nil then [{MakeRecord env [Exp.2.1]}]
    [] H|T then {Extendvar Exp H} | T
    end
 end
 
+%Extends the environment with the new variable
 fun {Extendvar Exp LocalEnv}
    case LocalEnv of nil then {MakeRecord env [Exp]}
    else
@@ -166,12 +184,14 @@ fun {Extendvar Exp LocalEnv}
    end
 end
 
+%Defines a new function in the environment
 fun {EvalDefun Exp Env}
    case Env of nil then [{AdjoinAt {MakeRecord env [Exp.2.1]} Exp.2.1 'closure'|Env|Exp.2.2}]
    [] H|T then {Extendfun Exp H Env} | T
    end
 end
 
+%Extends the local environment with the function 
 fun {Extendfun Exp LocalEnv Env}
    case LocalEnv of nil then {AdjoinAt {MakeRecord env [Exp.2.1]} Exp.2.1 'closure'|Env|Exp.2.2}
    else
@@ -181,61 +201,72 @@ fun {Extendfun Exp LocalEnv Env}
    end
 end
 
+%Unifies two things, if one of them is an unbound variable it unifies 
 fun{EvalUnification Exp Env}
    case Env of nil then raise unboundVariable end
    [] H|T then 
-      try if {Interpret Exp.2.1 Env} == {Interpret Exp.2.2.1 Env} then Env
+      try if {MyEval Exp.2.1 Env} == {MyEval Exp.2.2.1 Env} then Env
 	  else raise esoNoUnifiK end 
 	  end
       catch noValorAsignado then 
 	 try
-	    {AdjoinAt H Exp.2.1 {Interpret Exp.2.2.1 Env}}|T
-	 catch noValorAsignado then {AdjoinAt H Exp.2.2.1 {Interpret Exp.2.1 Env}}|T 
+	    {AdjoinAt H Exp.2.1 {MyEval Exp.2.2.1 Env}}|T
+	 catch noValorAsignado then {AdjoinAt H Exp.2.2.1 {MyEval Exp.2.1 Env}}|T 
 	 end
       [] noExisteVariable then raise unboundVariable end
       end
    end
 end
 
+%Evaluates contitionals
 fun {EvalConditional Exp Env}
-   if {Interpret Exp.2.1 Env}
-   then {Interpret Exp.2.2.1 Env}
-   else {Interpret Exp.2.2.2.1 Env}
+   if {MyEval Exp.2.1 Env}
+   then {MyEval Exp.2.2.1 Env}
+   else {MyEval Exp.2.2.2.1 Env}
    end
 end
 
+%Checks if the expression is a self-evaluating value
 fun{IsValue Exp}
    {Or {IsNumber Exp}{IsBool Exp}}
 end
 
+%Checks if the expression is a variable
 fun{IsVariable Exp}
    {IsAtom Exp}
 end
 
+%Checks if the expression is the definition of a variable
 fun{IsDefvar Exp}
    Exp.1 == 'defvar'
 end
 
+%Checks if the expression is the definition of a function
 fun{IsDefun Exp}
    Exp.1 == 'defun'
 end
 
+%Checks if the expression is a unification
 fun{IsUnification Exp}
    Exp.1 == 'unify'
 end
 
+%Checks if the expression is a conditional
 fun{IsConditional Exp}
    Exp.1 == 'conditional'
 end
 
+%Checks if the expression is procedure application
 fun{IsApplication Exp}
    {IsList Exp} andthen {IsAtom Exp.1}
 end
 
+%Checks if the expression is an environment
 fun{IsEnvironment Exp}
    {IsList Exp} andthen {IsRecord Exp.1}
 end
 
+%Testing with the example
 {Browse {Main [[defvar x] [defun fac [n] [[conditional [eq n 0] 1 [multiply n [fac [subtract n 1]]]]]] [unify x [fac 5]] x ] }}
 %{Browse {MyApply eq [0 1] [env(n:1)]}}
 %{Browse {Main [[defvar x] [unify x 5] x]}}
