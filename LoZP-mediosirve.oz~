@@ -1,12 +1,34 @@
-%usamos el interprete de Scheme del libro Structure and Interpretation of Computer Programs como inspiracion
+%usamos el interpreter de Scheme del libro Structure and Interpretation of Computer Programs como inspiracion
 %Mariana Rodriguez
 %Pedro Salazar
 declare
 
-%'main' function
+%Main
+fun{Main LoZP} 
+   fun{Main2 LoZP Env}
+      case LoZP of nil then 'se acabu' 
+      [] H|T then
+	 local Res in
+	    Res = {MyEval H Env}
+	    if {IsEnvironment Res}
+	    then {Main2 T Res}
+	    else Res
+	    end
+	 end
+      end
+   end
+in
+   {Main2 LoZP nil}
+end
+
+
+%Interpret
+fun{Interpret L Ctx}
+   {MyEval L Ctx}
+end
 
 %Eval
-fun{Interpret Exp Env}
+fun{MyEval Exp Env}
 
    if {IsValue Exp}
    then Exp
@@ -27,7 +49,7 @@ fun{Interpret Exp Env}
    then {EvalConditional Exp Env}
 
    elseif {IsApplication Exp}
-   then {MyApply Exp.1 {Map fun{$ X} {Interpret X Env} end Exp.2} Env}
+   then {MyApply Exp.1 {Map Exp.2 fun{$ X} {MyEval X Env} end} Env}
 
    else raise chispasBatman end
    end
@@ -98,7 +120,7 @@ fun{EvalSequence Proc Env}
    case Proc of nil then raise funcionSinRetorno end
    [] H|T then
       local Res in
-	 Res = {Interpret H Env}
+	 Res = {MyEval H Env}
 	 if {IsEnvironment Res}
 	 then {EvalSequence T Res}
 	 else Res
@@ -147,28 +169,40 @@ fun {Extendvar Exp LocalEnv}
 end
 
 fun {EvalDefun Exp Env}
-   case Env of nil then [{AdjoinAt {MakeRecord env [Exp.1]} Exp.1 'closure'|Env|Exp.2}]
+   case Env of nil then [{AdjoinAt {MakeRecord env [Exp.2.1]} Exp.2.1 'closure'|Env|Exp.2.2}]
    [] H|T then {Extendfun Exp H Env} | T
    end
 end
 
 fun {Extendfun Exp LocalEnv Env}
-   case LocalEnv of nil then {AdjoinAt {MakeRecord env [Exp.1]} Exp.1 'closure'|Env|Exp.2}
+   case LocalEnv of nil then {AdjoinAt {MakeRecord env [Exp.2.1]} Exp.2.1 'closure'|Env|Exp.2.2}
    else
-      if {Value.hasFeature LocalEnv Exp.1} then raise yaExisteLaVariable end
-      else  {AdjoinAt LocalEnv  Exp.1 'closure'|Env|Exp.2}
+      if {Value.hasFeature LocalEnv Exp.2.1} then raise yaExisteLaVariable end
+      else  {AdjoinAt LocalEnv  Exp.2.1 'closure'|Env|Exp.2.2}
       end
    end
 end
 
-fun {EvalUnification Exp Env}
-   x
+fun{EvalUnification Exp Env}
+   case Env of nil then raise unboundVariable end
+   [] H|T then 
+      try if {MyEval Exp.2.1 Env} == {MyEval Exp.2.2.1 Env} then Env
+	  else raise esoNoUnifiK end 
+	  end
+      catch noValorAsignado then 
+	 try
+	    {AdjoinAt H Exp.2.1 {MyEval Exp.2.2.1 Env}}|T
+	 catch noValorAsignado then {AdjoinAt H Exp.2.2.1 {MyEval Exp.2.1 Env}}|T 
+	 end
+      [] noExisteVariable then raise unboundVariable end
+      end
+   end
 end
 
 fun {EvalConditional Exp Env}
-   if {Interpret Exp.1 Env}
-   then {Interpret Exp.2.1 Env}
-   else {Interpret Exp.2.2.1 Env}
+   if {MyEval Exp.2.1 Env}
+   then {MyEval Exp.2.2.1 Env}
+   else {MyEval Exp.2.2.2.1 Env}
    end
 end
 
@@ -204,7 +238,7 @@ fun{IsEnvironment Exp}
    {IsList Exp} andthen {IsRecord Exp.1}
 end
 
-{Show hola}
-{Browse {Interpret [defvar n]  nil}}
-{Browse {Interpret [eq 1 0]  nil}}
+
+{Browse {Main [[defvar x] [defun fac [n] [[conditional [eq n 0] [multiply n [fac [subtract n 1]]]]]] [unify x [fac 5]] x ] }}
 %{Browse {MyApply eq [0 1] [env(n:1)]}}
+%{Browse {Main [[defvar x] [unify x 5] x]}}
