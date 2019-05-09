@@ -4,7 +4,7 @@
 
 
 
-
+declare
 %Main function to start the interpreter, the only argument is the LoZP program
 %Returns either the value of the evaluation of the program or 'se acabu' in case the program does not return anything
 fun{Main LoZP} 
